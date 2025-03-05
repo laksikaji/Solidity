@@ -30,9 +30,13 @@ function commit(bytes32 dataHash) public {
 }
 
 การทำงานของ commit()
+
 1.ผู้เล่นต้องมีครบ 2 คนก่อน
+
 2.ผู้เล่นต้องไม่เคยเลือกมาก่อน
+
 3.ผู้เล่นส่งค่าที่เข้ารหัส (dataHash) ซึ่งได้จาก keccak256(abi.encodePacked(choice, randomValue))
+
 4.เก็บค่า commit ไว้ และกำหนดค่า revealed เป็น false
 
 การเข้ารหัสข้อมูลทำให้ไม่มีใครสามารถรู้ว่าอีกฝ่ายเลือกอะไร จนกว่าทั้งสองคนจะเปิดเผยตัวเลือก (reveal)
@@ -47,12 +51,15 @@ function withdraw() public {
 }
 
 การทำงานของโค้ด
+
 1.หากเวลาผ่านไป 5 นาที (block.timestamp > startTime + 5 minutes) แล้วไม่มีผู้เล่นคนที่สองเข้ามา
+
 2.ผู้เล่นที่เข้ามาก่อนสามารถถอนเงินออกจาก Contract ได้
+
 3.หลังจากคืนเงินแล้วจะเรียก resetGame() เพื่อให้สามารถเริ่มเกมใหม่ได้
 
 **4. การเปิดเผยตัวเลือก (Reveal) และตัดสินผู้ชนะ**
-เมื่อทั้งสองฝ่ายได้ commit ไว้แล้ว ผู้เล่นต้องเปิดเผยตัวเลือก (reveal) โดยต้องมีหลักฐานว่าสิ่งที่เปิดเผยตรงกับสิ่งที่ commit ไว้ก่อนหน้านี้
+เมื่อทั้งสองฝ่ายได้ commit ไว้แล้ว ผู้เล่นต้องเปิดเผยตัวเลือก (reveal) โดยต้องมีหลักฐานว่าสิ่งที่เปิดเผยตรงกับสิ่งที่ commit ไว้ก่อนหน้านี้:
 
 function reveal(uint choice, bytes32 randomValue) public {
     require(commits[msg.sender] != 0, "Must commit first");
@@ -70,13 +77,18 @@ function reveal(uint choice, bytes32 randomValue) public {
 }
 
 การทำงานของ reveal()
-1.ตรวจสอบว่าผู้เล่นเคย commit มาก่อน (require(commits[msg.sender] != 0)).
-2.ตรวจสอบว่ายังไม่เคย reveal มาก่อน (require(!revealed[msg.sender])).
-3.ตรวจสอบว่าค่า choice + randomValue ที่เปิดเผยนั้น ต้องตรงกับค่า commit ที่เคยส่งไปก่อนหน้านี้ (keccak256(abi.encodePacked(choice, randomValue)) == commits[msg.sender]).
-4.บันทึกตัวเลือกของผู้เล่น และกำหนดว่าเปิดเผยแล้ว (revealed[msg.sender] = true).
-5.หากทั้งสองคนเปิดเผยแล้ว (numInput == 2):
-    5.1.เรียก _checkWinnerAndPay() เพื่อตัดสินผู้ชนะ.
-    5.2.รีเซ็ตเกมเพื่อให้เริ่มรอบใหม่.
+
+1.ตรวจสอบว่าผู้เล่นเคย commit มาก่อน (require(commits[msg.sender] != 0))
+
+2.ตรวจสอบว่ายังไม่เคย reveal มาก่อน (require(!revealed[msg.sender]))
+
+3.ตรวจสอบว่าค่า choice + randomValue ที่เปิดเผยนั้น ต้องตรงกับค่า commit ที่เคยส่งไปก่อนหน้านี้ (keccak256(abi.encodePacked(choice, randomValue)) == commits[msg.sender])
+
+4.บันทึกตัวเลือกของผู้เล่น และกำหนดว่าเปิดเผยแล้ว (revealed[msg.sender] = true)
+
+5.หากทั้งสองคนเปิดเผยแล้ว
+    5.1.เรียก _checkWinnerAndPay() เพื่อตัดสินผู้ชนะ
+    5.2.รีเซ็ตเกมเพื่อให้เริ่มรอบใหม่
 
 **สรุป**
 -โค้ดนี้ใช้ commit-reveal scheme เพื่อป้องกัน front-running

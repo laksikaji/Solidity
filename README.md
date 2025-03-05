@@ -5,11 +5,11 @@
 **1. การป้องกันการล็อกเงินใน Contract**
 ปัญหาที่อาจเกิดขึ้นคือมีผู้เล่นเข้ามาวางเงินเดิมพัน แต่ไม่มีผู้เล่นคนที่สองเข้าร่วมหรือผู้เล่นไม่ส่งตัวเลือก ทำให้เงินถูกล็อกไว้ในสัญญาโดยไม่มีใครสามารถถอนออกได้ โค้ดที่ป้องกันปัญหานี้คือ:
 
-function withdraw() public {
-    require(block.timestamp > startTime + 5 minutes, "You have to wait 5 minutes before withdrawing money.");
-    payable(players[0]).transfer(1 ether);
-    resetGame();
-}
+    function withdraw() public {
+        require(block.timestamp > startTime + 5 minutes, "You have to wait 5 minutes before withdrawing money.");
+        payable(players[0]).transfer(1 ether);
+        resetGame();
+    }
 
 การทำงานของโค้ดนี้:
 
@@ -22,12 +22,12 @@ function withdraw() public {
 **2. การซ่อนตัวเลือก (Choice) และการ Commit**
 เพื่อป้องกันการใช้ front-running (รู้ตัวเลือกของอีกฝ่ายล่วงหน้าและเลือกชนะได้) เราใช้ commit-reveal scheme โดยให้ผู้เล่นสร้างค่าที่ถูกเข้ารหัสก่อน (commit) แล้วเปิดเผยค่าทีหลัง (reveal)
 
-function commit(bytes32 dataHash) public {
-    require(numPlayer == 2, "There must be 2 players first.");
-    require(player_not_played[msg.sender], "You have already chosen");
-    commits[msg.sender] = dataHash;
-    revealed[msg.sender] = false;
-}
+    function commit(bytes32 dataHash) public {
+        require(numPlayer == 2, "There must be 2 players first.");
+        require(player_not_played[msg.sender], "You have already chosen");
+        commits[msg.sender] = dataHash;
+        revealed[msg.sender] = false;
+    }
 
 การทำงานของ commit()
 
@@ -44,11 +44,11 @@ function commit(bytes32 dataHash) public {
 **3. การจัดการกับความล่าช้าเมื่อผู้เล่นไม่ครบทั้งสองคน**
 หากมีผู้เล่นเข้ามาคนเดียวและรออีกฝ่ายนานเกินไป ระบบต้องมีมาตรการป้องกันไม่ให้เกมติดค้าง
 
-function withdraw() public {
-    require(block.timestamp > startTime + 5 minutes, "You have to wait 5 minutes before withdrawing money.");
-    payable(players[0]).transfer(1 ether);
-    resetGame();
-}
+    function withdraw() public {
+        require(block.timestamp > startTime + 5 minutes, "You have to wait 5 minutes before withdrawing money.");
+        payable(players[0]).transfer(1 ether);
+        resetGame();
+    }
 
 การทำงานของโค้ด
 
@@ -61,20 +61,20 @@ function withdraw() public {
 **4. การเปิดเผยตัวเลือก (Reveal) และตัดสินผู้ชนะ**
 เมื่อทั้งสองฝ่ายได้ commit ไว้แล้ว ผู้เล่นต้องเปิดเผยตัวเลือก (reveal) โดยต้องมีหลักฐานว่าสิ่งที่เปิดเผยตรงกับสิ่งที่ commit ไว้ก่อนหน้านี้:
 
-function reveal(uint choice, bytes32 randomValue) public {
-    require(commits[msg.sender] != 0, "Must commit first");
-    require(!revealed[msg.sender], "You have revealed your options.");
-    require(keccak256(abi.encodePacked(choice, randomValue)) == commits[msg.sender], "Data does not match commit");
-    require(choice >= 0 && choice <= 4, "Incorrect option");
-    player_choice[msg.sender] = choice;
-    revealed[msg.sender] = true;
-    numInput++;
-    
-    if (numInput == 2) {
-        _checkWinnerAndPay(); // ตรวจสอบผู้ชนะและจ่ายเงินรางวัล
-        resetGame(); // รีเซ็ตเกม
+    function reveal(uint choice, bytes32 randomValue) public {
+        require(commits[msg.sender] != 0, "Must commit first");
+        require(!revealed[msg.sender], "You have revealed your options.");
+        require(keccak256(abi.encodePacked(choice, randomValue)) == commits[msg.sender], "Data does not match commit");
+        require(choice >= 0 && choice <= 4, "Incorrect option");
+        player_choice[msg.sender] = choice;
+        revealed[msg.sender] = true;
+        numInput++;
+        
+        if (numInput == 2) {
+            _checkWinnerAndPay(); // ตรวจสอบผู้ชนะและจ่ายเงินรางวัล
+            resetGame(); // รีเซ็ตเกม
+        }
     }
-}
 
 การทำงานของ reveal()
 
@@ -87,11 +87,17 @@ function reveal(uint choice, bytes32 randomValue) public {
 4.บันทึกตัวเลือกของผู้เล่น และกำหนดว่าเปิดเผยแล้ว (revealed[msg.sender] = true)
 
 5.หากทั้งสองคนเปิดเผยแล้ว
-    5.1.เรียก _checkWinnerAndPay() เพื่อตัดสินผู้ชนะ
-    5.2.รีเซ็ตเกมเพื่อให้เริ่มรอบใหม่
+
+   5.1.เรียก _checkWinnerAndPay() เพื่อตัดสินผู้ชนะ
+
+   5.2.รีเซ็ตเกมเพื่อให้เริ่มรอบใหม่
 
 **สรุป**
+
 -โค้ดนี้ใช้ commit-reveal scheme เพื่อป้องกัน front-running
+
 -มีระบบ withdraw() เพื่อให้ผู้เล่นที่รอนานเกินไปสามารถดึงเงินคืนได้
+
 -ระบบ reveal() ตรวจสอบความถูกต้องของข้อมูลก่อนตัดสินผู้ชนะ
+
 -มีการรีเซ็ตเกมหลังจากรอบสิ้นสุดเพื่อให้สามารถเริ่มใหม่ได้
